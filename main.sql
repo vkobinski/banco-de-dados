@@ -163,34 +163,36 @@ INSERT INTO playlist_musica (codP, codM) VALUES (2, 5);
 INSERT INTO playlist_musica (codP, codM) VALUES (2, 6);
 INSERT INTO playlist_musica (codP, codM) VALUES (1, 7);
 
+
+
+CREATE VIEW MusicaArtista AS
+SELECT m.codM, m.nome, m.duracao, g.tipo
+FROM musica m 
+JOIN musica_artista ma ON m.codM = ma.codM
+JOIN artista a ON ma.codART = a.codART
+JOIN genero g ON g.codG = m.codG;
+
+CREATE VIEW UsuarioDispositivo AS
+SELECT u.codU, u.nome, d.codD, d.tipo
+FROM dispositivo d
+JOIN usuario u ON u.codU = d.codU;
+
+CREATE VIEW MusicaGenero AS
+SELECT m.codM, m.nome, m.duracao, g.tipo
+FROM musica m
+JOIN genero g ON g.codG = m.codG;
+
+CREATE VIEW PlaylistUsuario AS
 SELECT p.codP, p.nome, p.criador, p.dataCriacao
 FROM usuario u
 JOIN biblioteca b ON b.codu = u.codU
-JOIN playlist p ON b.codB = p.codB
-WHERE u.codU = '1';
+JOIN playlist p ON b.codB = p.codB;
 
-SELECT m.codM, m.nome, m.duracao, g.tipo, a.nome
+CREATE VIEW MusicaPlaylist AS
+SELECT m.codM, m.nome AS nomeMusica, m.duracao, g.tipo, a.nome AS nomeArtista
 FROM playlist p
 JOIN playlist_musica pm ON p.codP = pm.codP
 JOIN musica m ON pm.codM = m.codM
 JOIN musica_artista ma ON m.codM = ma.codM
 JOIN artista a ON ma.codART = a.codART
-JOIN genero g ON m.codG = g.codG
-WHERE p.codP = 1;
-
-SELECT m.codM, m.nome, m.duracao, g.tipo
-FROM musica m 
-JOIN musica_artista ma ON m.codM = ma.codM
-JOIN artista a ON ma.codART = a.codART
-JOIN genero g ON g.codG = m.codG
-WHERE a.nome = 'Guns N roses';
-
-SELECT u.codU, u.nome, d.codD, d.tipo
-FROM dispositivo d
-JOIN usuario u ON u.codU = d.codU
-WHERE u.nome = 'gabriel';
-
-SELECT m.codM, m.nome, m.duracao, g.tipo
-FROM musica m
-JOIN genero g ON g.codG = m.codG
-WHERE g.tipo = 'Rock';
+JOIN genero g ON m.codG = g.codG;
