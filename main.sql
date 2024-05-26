@@ -57,6 +57,14 @@ CREATE TABLE artista (
     CONSTRAINT pk_artista PRIMARY KEY (codART)
 );
 
+CREATE TABLE logs (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    action VARCHAR(50) NOT NULL,
+    table_name VARCHAR(50) NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    details VARCHAR(255)
+);
+
 ALTER TABLE dispositivo
 ADD COLUMN codU INT,
 ADD CONSTRAINT fk_usuario_codU FOREIGN KEY (codU) REFERENCES usuario(codU) ON DELETE CASCADE;
@@ -93,14 +101,96 @@ CREATE TABLE musica_artista (
     FOREIGN KEY (codART) REFERENCES artista(codART)
 );
 
+
+-- TRIGGERS
+
+DELIMITER //
+
+CREATE TRIGGER Tgr_Dispositivo_Insert 
+AFTER INSERT ON dispositivo
+FOR EACH ROW 
+BEGIN
+    INSERT INTO logs (action, table_name, timestamp) VALUES ('INSERT', 'dispositivo', NOW());
+END//
+
+CREATE TRIGGER Tgr_Usuario_Insert 
+AFTER INSERT ON usuario
+FOR EACH ROW 
+BEGIN
+    INSERT INTO logs (action, table_name, timestamp) VALUES ('INSERT', 'usuario', NOW());
+END//
+
+CREATE TRIGGER Tgr_Biblioteca_Insert 
+AFTER INSERT ON biblioteca
+FOR EACH ROW 
+BEGIN
+    INSERT INTO logs (action, table_name, timestamp) VALUES ('INSERT', 'biblioteca', NOW());
+END//
+
+CREATE TRIGGER Tgr_Historico_Insert 
+AFTER INSERT ON historico
+FOR EACH ROW 
+BEGIN
+    INSERT INTO logs (action, table_name, timestamp) VALUES ('INSERT', 'historico', NOW());
+END//
+
+CREATE TRIGGER Tgr_Playlist_Insert 
+AFTER INSERT ON playlist
+FOR EACH ROW 
+BEGIN
+    INSERT INTO logs (action, table_name, timestamp) VALUES ('INSERT', 'playlist', NOW());
+END//
+
+CREATE TRIGGER Tgr_Musica_Insert 
+AFTER INSERT ON musica
+FOR EACH ROW 
+BEGIN
+    INSERT INTO logs (action, table_name, timestamp) VALUES ('INSERT', 'musica', NOW());
+END//
+
+CREATE TRIGGER Tgr_Genero_Insert 
+AFTER INSERT ON genero
+FOR EACH ROW 
+BEGIN
+    INSERT INTO logs (action, table_name, timestamp) VALUES ('INSERT', 'genero', NOW());
+END//
+
+CREATE TRIGGER Tgr_Album_Insert 
+AFTER INSERT ON album
+FOR EACH ROW 
+BEGIN
+    INSERT INTO logs (action, table_name, timestamp) VALUES ('INSERT', 'album', NOW());
+END//
+
+CREATE TRIGGER Tgr_Artista_Insert 
+AFTER INSERT ON artista
+FOR EACH ROW 
+BEGIN
+    INSERT INTO logs (action, table_name, timestamp) VALUES ('INSERT', 'artista', NOW());
+END//
+
+CREATE TRIGGER Tgr_Playlist_Musica_Insert 
+AFTER INSERT ON playlist_musica
+FOR EACH ROW 
+BEGIN
+    INSERT INTO logs (action, table_name, timestamp) VALUES ('INSERT', 'playlist_musica', NOW());
+END//
+
+CREATE TRIGGER Tgr_Musica_Artista_Insert 
+AFTER INSERT ON musica_artista
+FOR EACH ROW 
+BEGIN
+    INSERT INTO logs (action, table_name, timestamp) VALUES ('INSERT', 'musica_artista', NOW());
+END//
+
+DELIMITER ;
+
 /*consultas: */
 INSERT INTO usuario (codU, nome, cpf, fone)
 VALUES (1, 'gabriel', '12345678901', '123456789');
 
 INSERT INTO biblioteca (codB, codu)
 VALUES (1, 1);
-
-
 
  INSERT INTO dispositivo (codD, tipo, codU) VALUES (1, 'Smartphone', 1);
  INSERT INTO dispositivo (codD, tipo, codU) VALUES (2, 'Notebook', 1);
@@ -163,8 +253,6 @@ INSERT INTO playlist_musica (codP, codM) VALUES (2, 5);
 INSERT INTO playlist_musica (codP, codM) VALUES (2, 6);
 INSERT INTO playlist_musica (codP, codM) VALUES (1, 7);
 
-
-
 CREATE VIEW MusicaArtista AS
 SELECT m.codM, m.nome, m.duracao, g.tipo
 FROM musica m 
@@ -196,3 +284,68 @@ JOIN musica m ON pm.codM = m.codM
 JOIN musica_artista ma ON m.codM = ma.codM
 JOIN artista a ON ma.codART = a.codART
 JOIN genero g ON m.codG = g.codG;
+
+DELIMITER $$
+
+CREATE PROCEDURE adiciona_musica_playlist (
+    IN codM INT,
+    IN codP INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        INSERT INTO logs (action, table_name, details)
+        VALUES ('ERROR', 'playlist_musica', 'Falha ao adicionar música à playlist');
+    END;
+
+    INSERT INTO playlist_musica (codP, codM)
+    VALUES (codP, codM);
+END $$
+
+CREATE PROCEDURE adiciona_musica_artista(
+    IN codART INT,
+    IN codM INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        INSERT INTO logs (action, table_name, details)
+        VALUES ('ERROR', 'musica_artista', CONCAT('Falha ao relacionar musica ', codM, ' com o artista ', codART));
+    END;
+    
+    INSERT INTO musica_artista (codM, codART)
+    VALUES (codM, codART);
+END $$
+
+CREATE PROCEDURE adiciona_dispositivo_usuario(
+    IN codD INT,
+    IN codU INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        INSERT INTO logs (action, table_name, details)
+        VALUES ('ERROR', 'dispositivo', CONCAT('Falha ao relacionar dispositivo ', codD, ' com o usuario ', codU));
+    END;
+
+    UPDATE dispositivo
+    SET codU = codU
+    WHERE codD = codD;
+END $$
+
+CREATE PROCEDURE adiciona_musica_album(
+    IN codM INT,
+    IN codA INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        INSERT INTO logs (action, table_name, details)
+        VALUES ('ERROR', 'musica', CONCAT('Falha ao relacionar musica ', codM, ' com o album ', codA));
+    END;
+    UPDATE musica
+    SET codA = codA
+    WHERE codM = codM;
+END $$
+
+DELIMITER ;
