@@ -59,22 +59,20 @@ CREATE TABLE artista (
 
 ALTER TABLE dispositivo
 ADD COLUMN codU INT,
-ADD CONSTRAINT fk_usuario_codU FOREIGN KEY (codU) REFERENCES usuario(codU);
-
-ALTER TABLE usuario
-ADD COLUMN codB INT,
-ADD CONSTRAINT fk_biblioteca_codB FOREIGN KEY (codB) REFERENCES biblioteca(codB);
+ADD CONSTRAINT fk_usuario_codU FOREIGN KEY (codU) REFERENCES usuario(codU) ON DELETE CASCADE;
 
 ALTER TABLE biblioteca
 ADD COLUMN codh INT,
-ADD CONSTRAINT fk_historico_codh FOREIGN KEY (codh) REFERENCES historico(codh);
+ADD COLUMN codu INT,
+ADD CONSTRAINT fk_historico_codh FOREIGN KEY (codh) REFERENCES historico(codh) ON DELETE CASCADE,
+ADD CONSTRAINT fk_usuario_biblioteca_codu FOREIGN KEY (codu) REFERENCES usuario(codU) ON DELETE CASCADE;
 
 ALTER TABLE playlist
 ADD COLUMN codB INT,
-ADD CONSTRAINT fk_playlist_codB FOREIGN KEY (codB) REFERENCES biblioteca(codB);
+ADD CONSTRAINT fk_playlist_codB FOREIGN KEY (codB) REFERENCES biblioteca(codB) ON DELETE CASCADE;
 
 ALTER TABLE musica	
-ADD COLUMN codG INT NOT NULL,
+ADD COLUMN codG INT,
 ADD COLUMN codA INT,
 ADD CONSTRAINT fk_genero_codG FOREIGN KEY (codG) REFERENCES genero(codG),
 ADD CONSTRAINT fk_album_codA FOREIGN KEY (codA) REFERENCES album(codA);
@@ -83,7 +81,7 @@ CREATE TABLE playlist_musica(
 	codP INT,
     codM INT,
     PRIMARY KEY (codP, codM),
-    FOREIGN KEY (codP) REFERENCES playlist(codP),
+    FOREIGN KEY (codP) REFERENCES playlist(codP) ON DELETE CASCADE,
     FOREIGN KEY (codM) REFERENCES musica(codM)
 );
 
@@ -96,12 +94,13 @@ CREATE TABLE musica_artista (
 );
 
 /*consultas: */
+INSERT INTO usuario (codU, nome, cpf, fone)
+VALUES (1, 'gabriel', '12345678901', '123456789');
 
-INSERT INTO biblioteca (codB)
-VALUES (1);
+INSERT INTO biblioteca (codB, codu)
+VALUES (1, 1);
 
-INSERT INTO usuario (codU, nome, cpf, fone, codB)
-VALUES (1, 'gabriel', '12345678901', '123456789', 1);
+
 
  INSERT INTO dispositivo (codD, tipo, codU) VALUES (1, 'Smartphone', 1);
  INSERT INTO dispositivo (codD, tipo, codU) VALUES (2, 'Notebook', 1);
@@ -111,7 +110,7 @@ INSERT INTO genero(codG, tipo) VALUES (2, 'MPB');
 INSERT INTO genero(codG, tipo) VALUES (3, 'Pop');
 
 INSERT INTO playlist (codP, nome, criador, dataCriacao, codB)
-VALUES (1, 'Minha Playlist', 'vitor', '2024-05-16', 1);
+VALUES (1, 'Minha Playlist', 'Victor', '2024-05-16', 1);
 INSERT INTO playlist (codP, nome, criador, dataCriacao, codB)
 VALUES (2, 'Nossa Playlist', 'Duda', '2024-05-16', 1);
 
@@ -127,6 +126,7 @@ INSERT INTO album(codA, nome) VALUES(1, 'Thriller');
 INSERT INTO album(codA, nome) VALUES(2, 'Elton John');
 INSERT INTO album(codA, nome) VALUES(3, 'A Night at the Opera');
 INSERT INTO album(codA, nome) VALUES(4, 'Appetite for Destruction');
+
 UPDATE musica SET codA = 1 WHERE codM = 1;
 UPDATE musica SET codA = 2 WHERE codM = 5;
 UPDATE musica SET codA = 3 WHERE codM = 4;
@@ -165,7 +165,7 @@ INSERT INTO playlist_musica (codP, codM) VALUES (1, 7);
 
 SELECT p.codP, p.nome, p.criador, p.dataCriacao
 FROM usuario u
-JOIN biblioteca b ON u.codB = b.codB
+JOIN biblioteca b ON b.codu = u.codU
 JOIN playlist p ON b.codB = p.codB
 WHERE u.codU = '1';
 
@@ -193,4 +193,4 @@ WHERE u.nome = 'gabriel';
 SELECT m.codM, m.nome, m.duracao, g.tipo
 FROM musica m
 JOIN genero g ON g.codG = m.codG
-WHERE g.tipo = 'Rock';
+WHERE g.tipo = 'Rock';
